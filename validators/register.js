@@ -29,13 +29,11 @@ const schema = {
         }
     },
     phone: { 
-        type: "number", 
-        min: 11, 
-        max: 11, 
+        type: "string",
+        pattern: /^09\d{9}$/,
         messages: {
-            stringMin: "شماره تلفن باید 11 کاراکتر باشد.",
-            stringMax: "شماره تلفن باید 11 کاراکتر باشد.",
-            }
+            stringPattern: "شماره تماس باید ۱۱ رقم و با 09 شروع شود."
+        }
     },
     password: { 
         type: "string", 
