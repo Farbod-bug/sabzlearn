@@ -28,6 +28,15 @@ const schema = {
             email: "ایمیل معتبر نیست."
         }
     },
+    phone: { 
+        type: "number", 
+        min: 11, 
+        max: 11, 
+        messages: {
+            stringMin: "شماره تلفن باید 11 کاراکتر باشد.",
+            stringMax: "شماره تلفن باید 11 کاراکتر باشد.",
+            }
+    },
     password: { 
         type: "string", 
         min: 8, 
