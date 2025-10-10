@@ -1,4 +1,5 @@
 const userModel = require('./../models/user');
+const banUserModel = require('./../models/banUser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -19,9 +20,23 @@ exports.register = async (req, res) => {
     })
 
     if (isUserExists) {
-        return res.static(409).json({
+        return res.status(409).json({
             message: "ایمیل یا نام کاربری قبلا استفاده شده است"
         });
+    }
+
+    const isEmailBan = await banUserModel.find({ email });
+
+    const isPhoneBan = await banUserModel.find({ phone });
+
+    if (isEmailBan.length && isPhoneBan.length) {
+        return res.status(409).json({ message: "ایمیل و شماره تلفن مورد نظر مسدود است" });
+    }
+    else if (isEmailBan.length) {
+        return res.status(409).json({ message: "ایمیل  مورد نظر مسدود است" })
+    }
+    else if (isPhoneBan.length) {
+        return res.status(409).json({ message: "شماره تلفن  مورد نظر مسدود است" })
     }
 
     const countOfUser = await userModel.countDocuments();
