@@ -9,6 +9,11 @@ const port = process.env.PORT;
     console.log('MongoDB connected');
 })();
 
+// app.get("/", (req, res) => {
+//     console.log("token =>", req.header("Authorization").split(" ")[1]);
+//     res.json({ message: "ok" });
+// })
+
 app.listen(port, () => {
     console.log('Server running on port ' + port);
 });

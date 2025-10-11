@@ -4,6 +4,12 @@ const banUserModel = require('./../models/banUser');
 exports.banUser = async (req, res) => {
     const mainUser = await userModel.findOne({ _id: req.params.id }).lean();
 
+    const isUserAdmin = mainUser.role == "ADMIN";
+
+    if (isUserAdmin) {
+        return res.status(403).json({ message: "کاربر مورد نظر مدیر می باشد" });
+    }
+
     const isUserBan = await banUserModel.findOne({ 
         $or: [{ email: mainUser.email }, { phone: mainUser.phone }],
      })
