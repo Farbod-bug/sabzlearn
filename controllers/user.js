@@ -27,3 +27,9 @@ exports.banUser = async (req, res) => {
     return res.status(500).json({ message: "ارور سمت سرور" });
 
 }
+
+exports.getAll = async (req, res) => {
+    const users = await userModel.find({}).select('-password'); 
+
+    return res.json(users);
+}
