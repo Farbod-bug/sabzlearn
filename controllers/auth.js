@@ -14,19 +14,29 @@ exports.register = async (req, res) => {
 
     const { username, name, email, phone, password } = req.body;
 
+    const isEmailExists = await userModel.findOne({ email });
+    const isUsernameExists = await userModel.findOne({ username });
+    const isPhoneExists = await userModel.findOne({ phone });
 
-    const isUserExists = await userModel.findOne({
-        $or: [{ username }, { email }],
-    })
-
-    if (isUserExists) {
+    if (isEmailExists) {
         return res.status(409).json({
-            message: "ایمیل یا نام کاربری قبلا استفاده شده است"
+            message: "ایمیل قبلا استفاده شده است"
+        });
+    }
+
+    if (isUsernameExists) {
+        return res.status(409).json({
+            message: "نام کاربری قبلا استفاده شده است"
+        });
+    }
+
+    if (isPhoneExists) {
+        return res.status(409).json({
+            message: "شماره تلفن قبلا استفاده شده است"
         });
     }
 
     const isEmailBan = await banUserModel.find({ email });
-
     const isPhoneBan = await banUserModel.find({ phone });
 
     if (isEmailBan.length && isPhoneBan.length) {
