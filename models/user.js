@@ -27,7 +27,29 @@ const schema = new mongoose.Schema({
         type: String,
         enum: ["ADMIN", "USER", "OWNER"],
         default: "USER"
-    }
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    isPhoneVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationCode: {
+        type: String
+    },
+    phoneVerificationCode: {
+        type: String
+    },
+    emailVerificationSentAt: { 
+        type: Date, 
+        default: null 
+    },
+    phoneVerificationSentAt: { 
+        type: Date, 
+        default: null 
+    },
 }, { timestamps: true });
 
 const User = mongoose.model('User', schema);
