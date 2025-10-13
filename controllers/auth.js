@@ -107,21 +107,6 @@ exports.login = async (req, res) => {
             });
         }
 
-        // ۳) بررسی تایید ایمیل و شماره
-        if (!user.isEmailVerified || !user.isPhoneVerified) {
-            let message = "برای ورود، ابتدا ";
-
-            if (!user.isEmailVerified && !user.isPhoneVerified) {
-                message += "ایمیل و شماره تلفن خود را تأیید کنید.";
-            } else if (!user.isEmailVerified) {
-                message += "ایمیل خود را تأیید کنید.";
-            } else {
-                message += "شماره تلفن خود را تأیید کنید.";
-            }
-
-            return res.status(403).json({ message });
-        }
-
         // ۴) ساخت توکن و پاسخ موفق
         const accessToken = jwt.sign(
             { id: user._id },
