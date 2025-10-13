@@ -50,6 +50,19 @@ const schema = new mongoose.Schema({
         type: Date, 
         default: null 
     },
+    pendingEmail: { 
+        type: String 
+    },
+    emailChangeCode: { 
+        type: String 
+    },
+    emailChangeCodeExpiresAt: { 
+        type: Date 
+    },
+    emailChangeLastRequest: { 
+        type: Date 
+    },
+
 }, { timestamps: true });
 
 const User = mongoose.model('User', schema);

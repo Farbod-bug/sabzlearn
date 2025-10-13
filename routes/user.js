@@ -10,7 +10,6 @@ const router = express.Router();
 router
     .route('/')
     .get(authMiddleware, requireVerified(), isAdminMiddleware, userController.getAll)
-    .put(authMiddleware, userController.updateUser);
 
 router
     .route('/:id')
@@ -39,5 +38,21 @@ router
 router
     .route('/resend-phone-code')
     .post(authMiddleware, userController.resendPhoneVerification);
+
+router
+    .route('/change-password')
+    .post(authMiddleware, requireVerified(), userController.changePassword);
+
+router
+    .route('/change-email/request')
+    .post(authMiddleware, requireVerified(), userController.requestEmailChange);
+
+router
+    .route('/change-email/verify-old')
+    .post(authMiddleware, requireVerified(), userController.verifyCurrentEmail);
+
+router
+    .route('/change-email/verify-new')
+    .post(authMiddleware, requireVerified(), userController.verifyNewEmail);
 
 module.exports = router;
