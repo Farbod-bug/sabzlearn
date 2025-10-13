@@ -109,14 +109,18 @@ exports.changeRole = async (req, res) => {
         return res.status(400).json({ message: "نقش وارد شده معتبر نیست" });
     }
 
-    const mainUser = await userModel.findById({ _id: req.params.id });
+    const mainUser = await userModel.findById(req.params.id);
 
     if (!mainUser) {
         return res.status(404).json({ message: "کاربر یافت نشد" });
     }
 
+    if (req.user.id === req.params.id) {
+        return res.status(403).json({ message: "امکان تغییر نقش خود وجود ندارد" });
+    }
+
     if (mainUser.role == "OWNER") {
-        return res.status(409).json({ message: "کاربر مدیر ارشد است" });
+        return res.status(403).json({ message: "کاربر مدیر ارشد است و قابل تغییر نیست" });
     }
 
     if (mainUser.role == "ADMIN" && role == "ADMIN") {
