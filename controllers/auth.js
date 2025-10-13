@@ -59,7 +59,7 @@ exports.register = async (req, res) => {
         phone,
         name,
         password: hashedPassword,
-        role: countOfUser > 0 ? "USER" : "ADMIN"
+        role: countOfUser > 0 ? "USER" : "OWNER"
     })
 
     const userObject = user.toObject();
