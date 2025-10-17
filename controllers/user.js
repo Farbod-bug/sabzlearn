@@ -398,6 +398,7 @@ exports.verifyCurrentEmail = async (req, res) => {
       if (user.emailChangeCodeExpiresAt < Date.now()) {
         // پاکسازی ساده‌ی فیلدهای مربوطه
         user.emailChangeCode = undefined;
+        user.pendingEmail = undefined;
         user.emailChangeCodeExpiresAt = undefined;
         await user.save();
         return res.status(410).json({ message: "کد ارسال شده به ایمیل فعلی منقضی شده است. دوباره درخواست دهید." });
@@ -497,3 +498,174 @@ exports.verifyNewEmail = async (req, res) => {
     }
 }
   
+exports.requestPhoneChange = async (req, res) => {
+    try {
+      const user = await userModel.findById(req.user._id);
+      if (!user) {
+        return res.status(404).json({ message: "کاربر یافت نشد" });
+      }
+  
+      const { newPhone } = req.body;
+      if (!newPhone) {
+        return res.status(400).json({ message: "شماره تلفن جدید الزامی است" });
+      }
+  
+      const phone = newPhone.trim();
+  
+      // ✅ چک کردن پترن شماره تلفن (ایران و بین‌المللی)
+      const phoneRegex = /^09\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ message: "فرمت شماره تلفن معتبر نیست" });
+      }
+  
+      if (user.phone === phone) {
+        return res.status(409).json({ message: "شماره جدید نباید با شماره فعلی یکسان باشد" });
+      }
+  
+      const existing = await userModel.findOne({ phone });
+      if (existing) {
+        return res.status(409).json({ message: "این شماره قبلاً ثبت شده است" });
+      }
+  
+      // محدودیت ۵ دقیقه بین درخواست‌ها
+      if (
+        user.phoneChangeLastRequest &&
+        Date.now() - user.phoneChangeLastRequest.getTime() < 5 * 60 * 1000
+      ) {
+        const remaining = Math.ceil(
+          (5 * 60 * 1000 - (Date.now() - user.phoneChangeLastRequest.getTime())) / 1000
+        );
+        return res
+          .status(429)
+          .json({ message: `لطفاً ${remaining} ثانیه دیگر دوباره تلاش کنید.` });
+      }
+  
+      // ساخت کد تأیید ۶ رقمی
+      const code = crypto.randomInt(100000, 999999).toString();
+  
+      user.pendingPhone = phone;
+      user.phoneChangeCode = code;
+      user.phoneChangeCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // اعتبار ۱۰ دقیقه
+      user.phoneChangeLastRequest = new Date();
+      await user.save();
+  
+      // 📱 ارسال پیامک (فعلاً شبیه‌سازی شده)
+      // await sendSMS(user.phone, `کد تایید تغییر شماره شما: ${code}`);
+  
+      return res.status(200).json({
+        message: "کد تأیید به شماره فعلی شما ارسال شد. لطفاً برای ادامه تغییر، کد را وارد کنید."
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "خطا در ارسال کد تأیید شماره تلفن" });
+    }
+  };
+  
+exports.verifyCurrentPhone = async (req, res) => {
+    try {
+      const { code } = req.body;
+      const user = await userModel.findById(req.user._id);
+  
+      if (!user) return res.status(404).json({ message: "کاربر یافت نشد" });
+      if (!code) return res.status(400).json({ message: "کد تایید الزامی است" });
+  
+      // وجود pendingPhone و کد مرحله اول لازم است
+      if (!user.pendingPhone || !user.phoneChangeCode || !user.phoneChangeCodeExpiresAt) {
+        return res.status(400).json({ message: "درخواستی برای تغییر شماره تلفن فعال نیست." });
+      }
+  
+      if (user.phoneChangeCodeExpiresAt < Date.now()) {
+        // پاکسازی ساده‌ی فیلدهای مربوطه
+        user.phoneChangeCode = undefined;
+        user.pendingPhone = undefined;
+        user.phoneChangeCodeExpiresAt = undefined;
+        await user.save();
+        return res.status(410).json({ message: "کد ارسال شده به شماره تلفن فعلی منقضی شده است. دوباره درخواست دهید." });
+      }
+  
+      if (String(user.phoneChangeCode) !== String(code)) {
+        return res.status(400).json({ message: "کد وارد شده معتبر نیست." });
+      }
+  
+      // مرحلهٔ اول با موفقیت انجام شد: حالا برای شماره تلفن جدید کد بساز و ارسال کن
+      const newCode = crypto.randomInt(100000, 999999).toString();
+  
+      user.phoneChangeCode = newCode;
+      user.phoneChangeCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // اعتبار ۱۰ دقیقه
+
+      // زمان آخرین ارسال را به روز کن (اگر لازم است برای rate-limit مرحله بعد)
+      user.phoneChangeLastRequest = new Date();
+      await user.save();
+  
+      // ارسال کد به شماره تلفن جدید (pendingPhone)
+  
+      return res.status(200).json({
+        message: "کد شماره تلفن فعلی تایید شد. کد جدیدی به شماره تلفن جدید شما ارسال شد. آن را وارد کنید تا شماره تلفن تغییر کند."
+      });
+  
+    } catch (err) {
+      console.error('verifyCurrentPhone error:', err);
+      return res.status(500).json({ message: "خطا در بررسی کد شماره تلفن فعلی فعلی" });
+    }
+}
+
+exports.verifyNewPhone = async (req, res) => {
+    try {
+      const { code } = req.body;
+      const user = await userModel.findById(req.user._id);
+  
+      if (!user) return res.status(404).json({ message: "کاربر یافت نشد" });
+      if (!code) return res.status(400).json({ message: "کد تایید الزامی است" });
+  
+      // باید pendingPhone و کد جدید وجود داشته باشد
+      if (!user.pendingPhone || !user.phoneChangeCode || !user.phoneChangeCodeExpiresAt) {
+        return res.status(400).json({ message: "درخواستی برای تغییر شماره تلفن فعال نیست یا مرحله قبل تکمیل نشده." });
+      }
+  
+      if (user.phoneChangeCodeExpiresAt < Date.now()) {
+        // پاکسازی فیلدهای pending
+        user.phoneChangeCode = undefined;
+        user.phoneChangeCodeExpiresAt = undefined;
+        user.pendingPhone = undefined;
+        await user.save();
+        return res.status(410).json({ message: "کد ارسال شده به شماره تلفن جدید منقضی شده است. دوباره درخواست دهید." });
+      }
+  
+      if (String(user.phoneChangeCode) !== String(code)) {
+        return res.status(400).json({ message: "کد وارد شده معتبر نیست." });
+      }
+  
+      // قبل از نهایی‌سازی، دوباره مطمئن شو ایمیل جدید توسط کسی دیگر ثبت نشده (race-check)
+      const conflict = await userModel.findOne({
+        $or: [{ email: user.pendingPhone }],
+        _id: { $ne: user._id }
+      });
+      if (conflict) {
+        // پاکسازی و ارور
+        user.phoneChangeCode = undefined;
+        user.phoneChangeCodeExpiresAt = undefined;
+        user.pendingPhone = undefined;
+        await user.save();
+        return res.status(409).json({ message: "شماره تلفن جدید هم‌اکنون توسط کاربر دیگری ثبت شده است." });
+      }
+  
+      // نهایی‌سازی تغییر
+      user.phone = user.pendingPhone;
+      user.pendingPhone = undefined;
+      user.phoneChangeCode = undefined;
+      user.phoneChangeCodeExpiresAt = undefined;
+      user.phoneChangeLastRequest = undefined;
+      // ایمیل جدید را تأیید شده علامت بزن (یا طبق سیاست‌تون ممکنه بخوای false بذاری)
+      user.isPhoneVerified = true;
+      user.lastPhoneChangeAt = new Date();
+  
+      await user.save();
+
+
+      return res.status(200).json({ message: "شماره تلفن با موفقیت تغییر یافت و تأیید شد." });
+  
+    } catch (err) {
+      console.error('verifyNewPhone error:', err);
+      return res.status(500).json({ message: "خطا در تایید شماره تلفن جدید" });
+    }
+}

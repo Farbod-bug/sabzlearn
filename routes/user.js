@@ -55,4 +55,16 @@ router
     .route('/change-email/verify-new')
     .post(authMiddleware, requireVerified(), userController.verifyNewEmail);
 
+router
+    .route('/change-phone/request')
+    .post(authMiddleware, requireVerified(), userController.requestPhoneChange);
+
+router
+    .route('/change-phone/verify-old')
+    .post(authMiddleware, requireVerified(), userController.verifyCurrentPhone);
+
+router
+    .route('/change-phone/verify-new')
+    .post(authMiddleware, requireVerified(), userController.verifyNewPhone);
+
 module.exports = router;

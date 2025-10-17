@@ -53,13 +53,31 @@ const schema = new mongoose.Schema({
     pendingEmail: { 
         type: String 
     },
+    pendingPhone: { 
+        type: String 
+    },
     emailChangeCode: { 
+        type: String 
+    },
+    phoneChangeCode: { 
         type: String 
     },
     emailChangeCodeExpiresAt: { 
         type: Date 
     },
+    phoneChangeCodeExpiresAt: { 
+        type: Date 
+    },
     emailChangeLastRequest: { 
+        type: Date 
+    },
+    phoneChangeLastRequest: { 
+        type: Date 
+    },
+    lastEmailChangeAt: { 
+        type: Date 
+    },
+    lastPhoneChangeAt: { 
         type: Date 
     },
 
