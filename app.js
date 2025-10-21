@@ -4,6 +4,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const authRouter = require('./routes/auth');
 const userRouter = require('./routes/user');
+const categoryRouter = require('./routes/category');
 
 const app = express();
 app.use('/courses/covers', express.static(path.join(__dirname, "public", "courses", "covers")));
@@ -13,5 +14,6 @@ app.use(bodyParser.json());
 
 app.use('/auth', authRouter);
 app.use('/users', userRouter);
+app.use('/category', categoryRouter);
 
 module.exports = app;
